@@ -28,12 +28,100 @@ def add_prop(group):
     group["prop"] = group["births"] / group["births"].sum()
     return group
 
-names = names.groupby(["year","sex"]).apply(add_prop)
+names = (
+    names.
+    groupby(["year","sex"]).
+    apply(add_prop).
+    reset_index(drop=True)
+)
 
-print(names.query("year == 1880 & sex == 'F'"))
+sum_alex = names.groupby(["year","sex"])['prop'].sum()
+
+#print(len(sum_alex[sum_alex == 1]) == len(sum_alex))
+
+def get_top100(group):
+    return group.sort_values("births",ascending=False)[:1000]
+    
+
+top1000 = names.groupby(["year","sex"]).apply(get_top100)
+
+top1000 = top1000.reset_index(drop=True)
+
+###################################################################
+
+boys = top1000[top1000["sex"] == 'M']
+girls = top1000[top1000["sex"] == 'F']
+
+
+total_births = top1000.pivot_table("births", index="year", aggfunc="sum", columns="name")
+
+
+subset = total_births[["John","Harry","Mary","Marilyn"]]
+
+subset.plot(subplots=True, figsize=(12,10), title="Number of births per year")
+plt.tight_layout()
+plt.savefig("subset.png")
+
+table = top1000.pivot_table("prop", index="year",aggfunc="sum", columns="sex")
+
+table.plot(title="sum of table.prop")
+plt.tight_layout()
+plt.savefig("increase_variance.png")
 
 
 
+df = boys[boys["year"] == 2010]
+
+prop_cumsum = df["prop"].sort_values(ascending=False).cumsum()
+
+#esta buscando la media desde los mas comunes hasta los menos comunes
+#116 / 1000
+#print(prop_cumsum.searchsorted(0.5))
+
+
+df = boys[boys["year"] == 1900]
+
+prop_cumsum = df["prop"].sort_values(ascending=False).cumsum()
+
+#esta buscando la media desde los mas comunes hasta los menos comunes
+#116 / 1000
+
+#para llegar a la media hay mas diversidad ahora que en 1900
+
+#print(prop_cumsum.searchsorted(0.5))
+
+def get_quantile_count(group, q = 0.5):
+
+    return ( 
+        group.
+        
+        sort_values(
+            "prop",
+            ascending=False
+        ).
+        
+        prop.
+        
+        cumsum().
+        
+        searchsorted(q) + 1
+    )
+
+
+diversity = (
+
+    top1000.
+
+    groupby(["year","sex"]).
+
+    apply(get_quantile_count).
+
+    unstack()
+)
+
+diversity.plot(title="cumulative plot name frequency to median")
+plt.tight_layout()
+plt.savefig("cumulative.png")
 
 
 
