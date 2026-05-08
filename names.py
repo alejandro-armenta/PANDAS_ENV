@@ -117,6 +117,7 @@ diversity = (
     apply(get_quantile_count).
 
     unstack()
+
 )
 
 diversity.plot(title="cumulative plot name frequency to median")
@@ -159,7 +160,6 @@ subtable = (
 
 letter_prop = (subtable / subtable.sum())
 
-plt.close('all')
 
 
 fig,axes = (
@@ -179,7 +179,6 @@ fig,axes = (
         rot=0, 
         ax=axes[0]
     )
-
 )
 
 
@@ -196,7 +195,101 @@ fig,axes = (
 plt.tight_layout()
 plt.savefig("proportions.png")
 
-#print(table.reindex(level="sex", columns=["F"]))
+
+#print((table / table.sum()).sum())
+
+letter_prop = (table / table.sum())
+
+male = (
+    letter_prop.
+    loc[
+        ["d","n","y"], 
+        "M"
+    ].
+    T
+)
+
+
+male.plot()
+plt.savefig("male.png")
+
+
+
+all_names = (
+    pd.Series(
+        top1000["name"].
+        unique()
+    )
+)
+
+lesley_like = (
+    all_names[
+        all_names.
+        str.
+        contains("Lesl")
+    ]
+)
+
+
+filtered = (
+    top1000[
+        top1000["name"].
+        isin(lesley_like)
+    ]
+)
+
+#print(filtered.groupby("name")["births"].sum())
+
+table = (
+    filtered.
+    pivot_table(
+        "births", 
+        index="year", 
+        aggfunc="sum", 
+        columns="sex"
+    )
+)
+
+#es el total por año
+"""
+print(
+    table.
+    div(
+        table.
+        sum(axis="columns"), 
+        axis="index"
+    ).sum(axis="columns")
+)
+"""
+
+table = (
+    table.
+    div(
+        table.
+        sum(axis="columns"), 
+        axis="index"
+    )
+)
+
+
+plt.close('all')
+
+(
+    table.
+    plot(
+        title="leslies as men or women in time.",
+        ylabel="proportion",
+        style=
+        {
+            "M":"r-",
+            "F":"b--"
+        }
+    )
+)
+
+plt.tight_layout()
+plt.savefig("leslies.png")
+
 
 
 
