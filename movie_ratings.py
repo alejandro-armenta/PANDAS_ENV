@@ -92,5 +92,3 @@ print(
     unstack("age")
       )
 
-
-

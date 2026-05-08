@@ -124,5 +124,80 @@ plt.tight_layout()
 plt.savefig("cumulative.png")
 
 
+def get_last_letter(x):
+    return x[-1]
+
+#estos si son todos
+last_letters = (
+    names["name"].
+    map(get_last_letter)
+)
+
+#print(last_letters)
+
+last_letters.name = "last_letter"
+
+#print(last_letters)
+
+#sumo todos los births que terminan con la a por año
+table = (
+    names.
+    pivot_table(
+        "births", 
+        index=last_letters, 
+        columns=["sex","year"], 
+        aggfunc="sum"
+    )
+)
+
+subtable = (
+    table.
+    reindex(level="year", columns=[1910,1960,2010])
+)
+
+#print((subtable / subtable.sum()).sum())
+
+letter_prop = (subtable / subtable.sum())
+
+plt.close('all')
+
+
+fig,axes = (
+    plt.
+    subplots(
+        2,
+        1,
+        figsize=(10,8)
+    )
+)
+
+(
+    letter_prop["M"].
+    plot(
+        kind="bar", 
+        title="male", 
+        rot=0, 
+        ax=axes[0]
+    )
+
+)
+
+
+(
+    letter_prop["F"].
+    plot(
+        kind="bar", 
+        title="female", 
+        rot=0, 
+        ax=axes[1]
+    )
+)
+
+plt.tight_layout()
+plt.savefig("proportions.png")
+
+#print(table.reindex(level="sex", columns=["F"]))
+
+
 
 
