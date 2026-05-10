@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+
 
 fec = pd.read_csv("datasets/fec/P00000001-ALL.csv", low_memory=False)
 
@@ -111,7 +113,7 @@ def get_top_amounts(group, key, n=5):
         nlargest(n)
     )
 
-
+"""
 print(
     bomr.
     groupby("cand_nm").
@@ -131,4 +133,28 @@ print(
         10
     )
 )
+"""
+
+bins= np.array(
+    [0,1,10,100,1000,10000,100_000,1_000_000,10_000_000]
+               )
+labels = (
+    pd.cut(
+        bomr['contb_receipt_amt'], 
+        bins=bins
+    )
+)
+
+#print(labels.sort_index())
+#print(bomr)
+print(
+    bomr.
+    groupby(
+        ["cand_nm",labels]
+    ).
+    size().
+    unstack(level=0)
+)
+
+
 
