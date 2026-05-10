@@ -1,97 +1,134 @@
+import matplotlib.pyplot as plt
 import pandas as pd
-import json
 
-db = (
-    json.
-    load(
-        open(
-            "datasets/usda_food/database.json"
+fec = pd.read_csv("datasets/fec/P00000001-ALL.csv", low_memory=False)
+
+#print(fec)
+
+#fec.info()
+
+
+parties = {
+    "Bachmann, Michelle": "Republican",
+"Cain, Herman": "Republican",
+"Gingrich, Newt": "Republican",
+"Huntsman, Jon": "Republican",
+"Johnson, Gary Earl": "Republican",
+"McCotter, Thaddeus G": "Republican",
+"Obama, Barack": "Democrat",
+"Paul, Ron": "Republican",
+"Pawlenty, Timothy": "Republican",
+"Perry, Rick": "Republican",
+"Roemer, Charles E. 'Buddy' III": "Republican",
+"Romney, Mitt": "Republican",
+"Santorum, Rick": "Republican"
+}
+
+#print(parties)
+
+
+fec['party'] = fec['cand_nm'].map(parties)
+
+"""
+print(fec['party'].value_counts())
+
+print(
+    (fec['contb_receipt_amt'] > 0).value_counts()
+)
+"""
+
+fec = fec[(fec['contb_receipt_amt'] > 0)]
+
+bomr = (
+    fec[
+        fec["cand_nm"].
+        isin(
+            ["Obama, Barack","Romney, Mitt"]
         )
-    )
+    ]
 )
 
 
-#print(db[0]["nutrients"][0])
-
-nutrients = pd.DataFrame(db[0]["nutrients"])
-
-info_keys = ["description","group","id","manufacturer"]
-
-info= pd.DataFrame(db, columns=info_keys)
-
-#info.info()
-
-#print(info.value_counts(info["group"]))
-
-nutrients = []
-
-for rec in db:
-    
-    df = pd.DataFrame(rec["nutrients"])
-    
-    df["id"] = rec["id"]
-
-    #print(df)
-
-    nutrients.append(df)
-
-nutrients = (
-    pd.concat(nutrients, ignore_index=True)
-)
-
-#print(nutrients.duplicated().sum())
-
-nutrients = nutrients.drop_duplicates()
-
-#print(info)
-#print(nutrients)
-
-col_mapping = {
-    "description":"food",
-    "group":"fgroup"
+occ_mapping = {
+"INFORMATION REQUESTED PER BEST EFFORTS" : "NOT PROVIDED",
+"INFORMATION REQUESTED" : "NOT PROVIDED",
+"INFORMATION REQUESTED (BEST EFFORTS)" : "NOT PROVIDED",
+"C.E.O.": "CEO"
 }
 
-info = (
-    info.
-    rename(
-        columns=col_mapping, 
-        copy=False
-    )
-)
+def get_occ(x):
+    return occ_mapping.get(x, x)
+
+fec["contbr_occupation"] = fec["contbr_occupation"].map(get_occ)
 
 
-col_mapping = {
-    "description":"nutrient",
-    "group":"nutgroup"
+emp_mapping = {
+"INFORMATION REQUESTED PER BEST EFFORTS" : "NOT PROVIDED",
+"INFORMATION REQUESTED" : "NOT PROVIDED",
+"SELF" : "SELF-EMPLOYED",
+"SELF EMPLOYED" : "SELF-EMPLOYED",
 }
 
-nutrients = (
-    nutrients.
-    rename(
-        columns=col_mapping, 
-        copy=False
+def get_emp(x):
+    return emp_mapping.get(x, x)
+
+fec["contbr_employer"] = fec["contbr_employer"].map(get_emp)
+
+#fec.info()
+#############################################################
+
+by_occ = (
+    fec.
+    pivot_table(
+        "contb_receipt_amt", 
+        index="contbr_occupation",
+        columns="party",
+        aggfunc="sum"
     )
 )
 
-#denormalizacion
-ndata = (pd.merge(nutrients,info, on="id"))
-
-ndata.to_pickle("ndata.pkl")
-
-result = (
-    ndata.
-    groupby(
-        ["nutrient","fgroup"]
-    )["value"].
-    quantile(0.5)
+over_2 = (
+    by_occ[
+        by_occ.
+        sum(axis="columns") > 2000000
+    ]
 )
 
+over_2.plot(kind="barh")
+plt.tight_layout()
+plt.savefig("occ.png")
+
+def get_top_amounts(group, key, n=5):
+    """
+    la ocupacion del donador de barack obama
+    la ocupacion del donador de rommey
+    """
+
+    return (
+        group.
+        groupby(key)['contb_receipt_amt'].
+        sum().
+        nlargest(n)
+    )
 
 
+print(
+    bomr.
+    groupby("cand_nm").
+    apply(
+        get_top_amounts, 
+        'contbr_occupation', 
+        7
+    )
+)
 
-
-
-
-    
-
+print(
+    bomr.
+    groupby("cand_nm").
+    apply(
+        get_top_amounts, 
+        'contbr_employer', 
+        10
+    )
+)
 
