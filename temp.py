@@ -147,6 +147,39 @@ labels = (
 
 #print(labels.sort_index())
 #print(bomr)
+
+#bomr.info()
+
+bucket_sums = (
+    bomr.
+    groupby(
+        ["cand_nm",labels]
+    )
+    ['contb_receipt_amt'].
+    sum().
+    unstack(level=0)
+)
+
+#print(bucket_sums)
+#print(bucket_sums.sum(axis="columns"))
+
+normed_sums = (
+    bucket_sums.
+    div(
+        bucket_sums.sum(axis="columns"),
+        axis="index"
+    )
+)
+
+plt.close('all')
+normed_sums.plot(kind="barh")
+plt.tight_layout()
+plt.savefig("proportions.png")
+
+
+
+"""
+
 print(
     bomr.
     groupby(
@@ -158,3 +191,34 @@ print(
 
 
 
+bomr.info()
+"""
+
+totals = (
+
+    bomr.
+    
+    groupby(
+        [
+            "cand_nm",
+            "contbr_st"
+        ]
+    )
+    ["contb_receipt_amt"].
+
+    sum().
+    
+    unstack(level=0).
+    
+    fillna(0)
+
+)
+
+totals = (
+    totals[totals.sum(axis="columns") > 100_000]
+    )
+
+print(totals.div(totals.sum(axis="columns"), axis="index").sum(axis='columns'))
+
+
+print(totals.div(totals.sum(axis="columns"), axis="index"))
